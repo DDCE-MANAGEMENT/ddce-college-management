@@ -128,6 +128,24 @@ async function openAttendance() {
       <input id="attendanceDate" type="date" required>
     </div>
     <p id="attendanceMessage">Loading students...</p>
+<div class="attendance-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:18px 0;">
+  <div class="card" style="border-left:5px solid #2563eb;">
+    <h3>Total Students</h3>
+    <p id="totalCount" style="font-size:28px;font-weight:bold;">0</p>
+  </div>
+  <div class="card" style="border-left:5px solid #16a34a;">
+    <h3>Present</h3>
+    <p id="presentCount" style="font-size:28px;font-weight:bold;color:#16a34a;">0</p>
+  </div>
+  <div class="card" style="border-left:5px solid #dc2626;">
+    <h3>Absent</h3>
+    <p id="absentCount" style="font-size:28px;font-weight:bold;color:#dc2626;">0</p>
+  </div>
+  <div class="card" style="border-left:5px solid #7c3aed;">
+    <h3>Attendance %</h3>
+    <p id="attendancePercent" style="font-size:28px;font-weight:bold;color:#7c3aed;">0%</p>
+  </div>
+</div>
     <div style="overflow-x:auto">
       <table>
         <thead><tr>
@@ -136,6 +154,7 @@ async function openAttendance() {
         <tbody id="attendanceRows"></tbody>
       </table>
     </div>
+<div id="attendanceReport" style="display:none;"></div>
     <button id="saveAttendanceButton">Save All Attendance</button>
     <button id="dashboardButton">Back to Dashboard</button>
   `;
@@ -185,6 +204,34 @@ async function openAttendance() {
   `).join("");
 
   message.textContent = "Total students: " + students.length;
+function updateAttendanceSummary() {
+  const total = students.length;
+  let present = 0;
+  let absent = 0;
+
+  students.forEach((student, index) => {
+    const status = document.getElementById("status_" + index).value;
+
+    if (status === "Present") present++;
+    if (status === "Absent") absent++;
+  });
+
+  document.getElementById("totalCount").textContent = total;
+  document.getElementById("presentCount").textContent = present;
+  document.getElementById("absentCount").textContent = absent;
+
+  const percentage = total > 0
+    ? ((present / total) * 100).toFixed(1)
+    : "0.0";
+
+  document.getElementById("attendancePercent").textContent =
+    percentage + "%";
+}
+
+students.forEach((student, index) => {
+  document.getElementById("status_" + index)
+    .addEventListener("change", updateAttendanceSummary);
+});
  async function loadAttendanceForDate() {
     const date = dateInput.value;
 
@@ -210,7 +257,7 @@ async function openAttendance() {
       document.getElementById("status_" + index).value =
         record ? record.status : "Present";
     });
-
+    updateAttendanceSummary();
     message.textContent =
       "Total students: " + students.length +
       " | Saved attendance: " + records.length;
@@ -247,9 +294,80 @@ async function openAttendance() {
 
       if(saveError) throw saveError;
 
-      message.textContent = "Success! " + records.length +
-        " students ki attendance save ho gayi.";
-      saveButton.textContent = "Saved";
+    updateAttendanceSummary();
+
+const total = students.length;
+let present = 0;
+let absent = 0;
+
+students.forEach((student, index) => {
+  const status = document.getElementById("status_" + index).value;
+  if (status === "Present") present++;
+  if (status === "Absent") absent++;
+});
+
+const percentage = total > 0
+  ? ((present / total) * 100).toFixed(1)
+  : "0.0";
+
+const report = document.getElementById("attendanceReport");
+
+report.innerHTML = `
+  <div style="background:#f4f7fb;padding:22px;border-radius:14px;">
+    <h1 style="color:#17365d;">DDCE Attendance Report</h1>
+    <p><b>Date:</b> ${date}</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
+      <div class="card" style="border-top:5px solid #2563eb;">
+        <h3>Total Students</h3>
+        <p style="font-size:32px;font-weight:bold;">${total}</p>
+      </div>
+
+      <div class="card" style="border-top:5px solid #16a34a;">
+        <h3>Present</h3>
+        <p style="font-size:32px;font-weight:bold;color:#16a34a;">${present}</p>
+      </div>
+
+      <div class="card" style="border-top:5px solid #dc2626;">
+        <h3>Absent</h3>
+        <p style="font-size:32px;font-weight:bold;color:#dc2626;">${absent}</p>
+      </div>
+
+      <div class="card" style="border-top:5px solid #7c3aed;">
+        <h3>Attendance %</h3>
+        <p style="font-size:32px;font-weight:bold;color:#7c3aed;">${percentage}%</p>
+      </div>
+    </div>
+
+    <button id="printReportButton">Print / Save as PDF</button>
+    <button id="backAttendanceButton">Back to Attendance</button>
+  </div>
+`;
+
+const dashboard = document.querySelector(".dashboard");
+dashboard.innerHTML = "";
+dashboard.appendChild(report);
+report.style.display = "block";
+
+document.getElementById("printReportButton").onclick = function() {
+  window.print();
+};
+
+document.getElementById("backAttendanceButton").onclick = openAttendance;
+
+document.getElementById("printReportButton").onclick = function() {
+  window.print();
+};
+
+document.getElementById("backAttendanceButton").onclick = openAttendance;
+
+report.style.display = "block";
+
+document.getElementById("printReportButton").onclick = function() {
+  window.print();
+};
+
+document.getElementById("backAttendanceButton").onclick = openAttendance;
     } catch(error) {
       message.textContent = "Save nahi hua: " + error.message;
       saveButton.disabled = false;
