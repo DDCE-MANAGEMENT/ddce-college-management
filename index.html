@@ -1,0 +1,261 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDCE College Management System</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#eef2f7;color:#17365d}
+.login-box{background:white;width:min(420px,calc(100% - 60px));margin:60px auto;padding:25px;box-sizing:border-box;border-radius:12px;box-shadow:0 4px 20px #0002;text-align:center}
+input,select{box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+.login-box input{width:100%}
+button{padding:11px;margin:8px 0;background:#17365d;color:white;border:0;border-radius:6px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.dashboard{max-width:1100px;margin:25px auto;padding:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 3px 12px #0001}
+.card button{width:100%}
+#message{color:#b00020}
+table{width:100%;border-collapse:collapse;background:white;margin-top:15px}
+th,td{padding:9px;border:1px solid #ddd;text-align:left}
+th{background:#e1eaf5}
+.attendance-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media(max-width:600px){.dashboard{padding:10px}th,td{padding:6px;font-size:13px}}
+</style>
+</head>
+<body>
+<div class="login-box" id="loginBox">
+  <h2>DDCE</h2>
+  <h3>College Management System</h3>
+  <p>Please Login</p>
+  <form id="loginForm">
+    <input id="username" type="email" placeholder="Admin Email" required>
+    <input id="password" type="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p id="message"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://rsnsmehmlsogsqfbyohv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_QlExMkjpqD_ajwh7j4VRhA_e0H5fO-Y";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const loginForm = document.getElementById("loginForm");
+
+loginForm.addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  const message = document.getElementById("message");
+  const email = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const loginButton = loginForm.querySelector("button");
+
+  loginButton.disabled = true;
+  message.style.color = "#b00020";
+  message.textContent = "Logging in...";
+
+  try {
+    const {data, error} = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(error) throw error;
+
+    const {data: profile, error: profileError} = await supabaseClient
+      .from("profiles")
+      .select("full_name, role")
+      .eq("id", data.user.id)
+      .single();
+
+    if(profileError || !profile || profile.role !== "admin") {
+      await supabaseClient.auth.signOut();
+      throw new Error("Admin access nahi mila. Profiles table mein role check karein.");
+    }
+
+    showDashboard(profile.full_name || "DDCE Admin");
+  } catch(error) {
+    message.textContent = "Login failed: " + error.message;
+    loginButton.disabled = false;
+  }
+});
+
+function showDashboard(adminName) {
+  document.getElementById("loginBox").style.display = "none";
+  const oldDashboard = document.querySelector(".dashboard");
+  if(oldDashboard) oldDashboard.remove();
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="dashboard">
+      <h1>DDCE Admin Dashboard</h1>
+      <p>Welcome, ${escapeHTML(adminName)}!</p>
+      <div class="cards">
+        <div class="card"><h3>Attendance Management</h3><p>Mark daily attendance.</p><button id="attendanceButton">Open Attendance</button></div>
+        <div class="card"><h3>Internal Exam Marks</h3><p>Manage internal marks.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+        <div class="card"><h3>Student Records</h3><p>View student records.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+        <div class="card"><h3>Lesson Plans</h3><p>Manage lesson plans.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+        <div class="card"><h3>Internship Records</h3><p>Manage internship records.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+        <div class="card"><h3>Reports / PDF Printing</h3><p>Reports and printing.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+      </div>
+      <button id="logoutButton">Logout</button>
+    </div>
+  `);
+
+  document.getElementById("attendanceButton").onclick = openAttendance;
+  document.getElementById("logoutButton").onclick = async function() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+  };
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+async function openAttendance() {
+  const dashboard = document.querySelector(".dashboard");
+
+  dashboard.innerHTML = `
+    <h1>Attendance Management</h1>
+    <p>DDCE College Management System</p>
+    <div class="attendance-tools">
+      <label for="attendanceDate">Date:</label>
+      <input id="attendanceDate" type="date" required>
+    </div>
+    <p id="attendanceMessage">Loading students...</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Enrollment No.</th><th>Student Name</th><th>Attendance</th>
+        </tr></thead>
+        <tbody id="attendanceRows"></tbody>
+      </table>
+    </div>
+    <button id="saveAttendanceButton">Save All Attendance</button>
+    <button id="dashboardButton">Back to Dashboard</button>
+  `;
+
+  const dateInput = document.getElementById("attendanceDate");
+  const today = new Date();
+  dateInput.value = today.getFullYear() + "-" +
+    String(today.getMonth()+1).padStart(2,"0") + "-" +
+    String(today.getDate()).padStart(2,"0");
+
+  document.getElementById("dashboardButton").onclick = async function() {
+    const {data: profile} = await supabaseClient
+      .from("profiles").select("full_name").single();
+    showDashboard(profile?.full_name || "DDCE Admin");
+  };
+
+  const message = document.getElementById("attendanceMessage");
+  const tbody = document.getElementById("attendanceRows");
+  const saveButton = document.getElementById("saveAttendanceButton");
+
+  const {data: students, error} = await supabaseClient
+    .from("students")
+    .select("id, enrollment_no, student_name")
+    .order("enrollment_no");
+
+  if(error) {
+    message.textContent = "Students load nahi hue: " + error.message;
+    return;
+  }
+
+  if(!students || students.length === 0) {
+    message.textContent = "Students table mein koi student nahi mila.";
+    return;
+  }
+
+  tbody.innerHTML = students.map((student,index) => `
+    <tr>
+      <td>${escapeHTML(student.enrollment_no)}</td>
+      <td>${escapeHTML(student.student_name)}</td>
+      <td>
+        <select id="status_${index}">
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+        </select>
+      </td>
+    </tr>
+  `).join("");
+
+  message.textContent = "Total students: " + students.length;
+ async function loadAttendanceForDate() {
+    const date = dateInput.value;
+
+    if (!date) return;
+
+    message.textContent = "Attendance load ho rahi hai...";
+
+    const { data: records, error: loadError } = await supabaseClient
+      .from("attendance")
+      .select("student_id, status")
+      .eq("attendance_date", date);
+
+    if (loadError) {
+      message.textContent = "Attendance load nahi hui: " + loadError.message;
+      return;
+    }
+
+    students.forEach((student, index) => {
+      const record = records.find(
+        item => item.student_id === student.id
+      );
+
+      document.getElementById("status_" + index).value =
+        record ? record.status : "Present";
+    });
+
+    message.textContent =
+      "Total students: " + students.length +
+      " | Saved attendance: " + records.length;
+  }
+
+  dateInput.addEventListener("change", loadAttendanceForDate);
+
+  await loadAttendanceForDate();
+
+  saveButton.onclick = async function() {
+    const date = dateInput.value;
+    if(!date) {
+      message.textContent = "Pehle date select karein.";
+      return;
+    }
+
+    const records = students.map((student,index) => ({
+      student_id: student.id,
+      attendance_date: date,
+      status: document.getElementById("status_" + index).value
+    }));
+
+    saveButton.disabled = true;
+    message.textContent = "Attendance save ho rahi hai...";
+
+    try {
+      const {error: saveError} = await supabaseClient
+  .from("attendance")
+  .upsert(records, {
+    onConflict: "student_id,attendance_date"
+  });
+
+
+
+      if(saveError) throw saveError;
+
+      message.textContent = "Success! " + records.length +
+        " students ki attendance save ho gayi.";
+      saveButton.textContent = "Saved";
+    } catch(error) {
+      message.textContent = "Save nahi hua: " + error.message;
+      saveButton.disabled = false;
+    }
+  };
+}
+</script>
+</body>
+</html>
