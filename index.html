@@ -1,39 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DDCE College Management System</title>
+
 <style>
+*{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#eef2f7;color:#17365d}
-.login-box{background:white;width:min(420px,calc(100% - 60px));margin:60px auto;padding:25px;box-sizing:border-box;border-radius:12px;box-shadow:0 4px 20px #0002;text-align:center}
+.login-box{background:white;width:min(420px,calc(100% - 30px));margin:60px auto;padding:25px;border-radius:12px;box-shadow:0 4px 20px #0002;text-align:center}
 input,select{box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
 .login-box input{width:100%}
-button{padding:11px;margin:8px 0;background:#17365d;color:white;border:0;border-radius:6px;cursor:pointer}
+button{padding:11px 15px;margin:8px 5px 8px 0;background:#17365d;color:white;border:0;border-radius:6px;cursor:pointer}
 button:disabled{opacity:.6;cursor:wait}
 .dashboard{max-width:1100px;margin:25px auto;padding:20px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-.card{background:white;padding:20px;border-radius:10px;box-shadow:0 3px 12px #0001}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 3px 12px #0001;min-width:0}
 .card button{width:100%}
 #message{color:#b00020}
-table{width:100%;border-collapse:collapse;background:white;margin-top:15px}
-th,td{padding:9px;border:1px solid #ddd;text-align:left}
+table{width:100%;min-width:320px;border-collapse:collapse;background:white;margin-top:10px}
+th,td{padding:10px;border:1px solid #ddd;text-align:left;overflow-wrap:anywhere}
 th{background:#e1eaf5}
 .attendance-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-@media(max-width:600px){.dashboard{padding:10px}th,td{padding:6px;font-size:13px}}
+.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+.present-heading{color:#15803d;margin-top:28px}
+.absent-heading{color:#b91c1c;margin-top:28px}
+.table-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.report-container{background:#f4f7fb;padding:22px;border-radius:14px}
+.report-title{color:#17365d}
+.report-summary .card h3{font-size:18px}
+.report-summary .card p{font-size:32px;font-weight:bold;margin:10px 0}
+
+@media(max-width:600px){
+  .dashboard{padding:12px;margin:10px auto}
+  .login-box{margin:30px auto;padding:20px}
+  .report-container{padding:12px}
+  .report-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .report-summary .card{padding:12px}
+  .report-summary .card h3{font-size:15px}
+  .report-summary .card p{font-size:25px}
+  th,td{padding:7px;font-size:13px}
+  button{font-size:14px}
+  h1{font-size:25px}
+  h2{font-size:21px}
+}
+
+@media print{
+  body{background:white;color:black}
+  .dashboard{margin:0;padding:0;max-width:none}
+  button{display:none!important}
+  .report-container{background:white;padding:0}
+  .card{box-shadow:none;break-inside:avoid}
+  table{break-inside:auto}
+  tr{break-inside:avoid}
+  .table-wrapper{overflow:visible}
+  table{min-width:0}
+  th,td{font-size:11px;padding:6px}
+  h1,h2,h3{break-after:avoid}
+}
 </style>
 </head>
+
 <body>
+
 <div class="login-box" id="loginBox">
   <h2>DDCE</h2>
   <h3>College Management System</h3>
   <p>Please Login</p>
+
   <form id="loginForm">
     <input id="username" type="email" placeholder="Admin Email" required>
     <input id="password" type="password" placeholder="Password" required>
     <button type="submit">Login</button>
   </form>
+
   <p id="message"></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 const SUPABASE_URL = "https://rsnsmehmlsogsqfbyohv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_QlExMkjpqD_ajwh7j4VRhA_e0H5fO-Y";
@@ -77,14 +122,28 @@ loginForm.addEventListener("submit", async function(event) {
     }
 
     showDashboard(profile.full_name || "DDCE Admin");
+
   } catch(error) {
     message.textContent = "Login failed: " + error.message;
     loginButton.disabled = false;
   }
 });
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, function(c) {
+    return {
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[c];
+  });
+}
+
 function showDashboard(adminName) {
   document.getElementById("loginBox").style.display = "none";
+
   const oldDashboard = document.querySelector(".dashboard");
   if(oldDashboard) oldDashboard.remove();
 
@@ -92,30 +151,217 @@ function showDashboard(adminName) {
     <div class="dashboard">
       <h1>DDCE Admin Dashboard</h1>
       <p>Welcome, ${escapeHTML(adminName)}!</p>
+
       <div class="cards">
-        <div class="card"><h3>Attendance Management</h3><p>Mark daily attendance.</p><button id="attendanceButton">Open Attendance</button></div>
-        <div class="card"><h3>Internal Exam Marks</h3><p>Manage internal marks.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
-        <div class="card"><h3>Student Records</h3><p>View student records.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
-        <div class="card"><h3>Lesson Plans</h3><p>Manage lesson plans.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
-        <div class="card"><h3>Internship Records</h3><p>Manage internship records.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
-        <div class="card"><h3>Reports / PDF Printing</h3><p>Reports and printing.</p><button onclick="alert('This module is not ready yet.')">Open</button></div>
+        <div class="card">
+          <h3>Attendance Management</h3>
+          <p>Mark daily attendance.</p>
+          <button id="attendanceButton">Open Attendance</button>
+        </div>
+
+        <div class="card">
+          <h3>Internal Exam Marks</h3>
+          <p>Manage internal marks and B.Ed. subjects.</p>
+          <button id="internalSubjectsButton">Open Subject List</button>
+        </div>
+
+        <div class="card">
+          <h3>Student Records</h3>
+          <p>View student records.</p>
+          <button onclick="alert('This module is not ready yet.')">Open</button>
+        </div>
+
+        <div class="card">
+          <h3>Lesson Plans</h3>
+          <p>Manage lesson plans.</p>
+          <button onclick="alert('This module is not ready yet.')">Open</button>
+        </div>
+
+        <div class="card">
+          <h3>Internship Records</h3>
+          <p>Manage internship records.</p>
+          <button onclick="alert('This module is not ready yet.')">Open</button>
+        </div>
+
+        <div class="card">
+          <h3>Reports / PDF Printing</h3>
+          <p>Reports and printing.</p>
+          <button onclick="alert('This module is not ready yet.')">Open</button>
+        </div>
       </div>
+
       <button id="logoutButton">Logout</button>
     </div>
   `);
 
   document.getElementById("attendanceButton").onclick = openAttendance;
+  document.getElementById("internalSubjectsButton").onclick = openInternalSubjects;
+
   document.getElementById("logoutButton").onclick = async function() {
     await supabaseClient.auth.signOut();
     location.reload();
   };
 }
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
+
+async function openInternalSubjects() {
+  const dashboard = document.querySelector(".dashboard");
+
+  dashboard.innerHTML = `
+    <h1>B.Ed. Subject List</h1>
+    <p>Add and manage the subjects used for Internal Exam Marks.</p>
+
+    <div class="card" style="margin:18px 0;">
+      <h3>Add New Subject</h3>
+      <form id="subjectForm">
+        <label for="subjectName"><b>Subject Name</b></label><br>
+        <input id="subjectName" type="text" placeholder="Enter B.Ed. subject name" required style="width:min(100%,520px);">
+        <button id="addSubjectButton" type="submit">Add Subject</button>
+      </form>
+      <p id="subjectMessage" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h3>Saved Subjects</h3>
+      <p>You can edit a subject name using the Edit button.</p>
+      <div id="subjectListMessage">Loading subjects...</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>No.</th><th>Subject Name</th><th>Action</th></tr>
+          </thead>
+          <tbody id="subjectRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <button id="subjectsDashboardButton">Back to Dashboard</button>
+  `;
+
+  document.getElementById("subjectsDashboardButton").onclick = async function() {
+    const {data: authData} = await supabaseClient.auth.getUser();
+    const userId = authData?.user?.id;
+    let adminName = "DDCE Admin";
+    if(userId) {
+      const {data: profile} = await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .maybeSingle();
+      if(profile?.full_name) adminName = profile.full_name;
+    }
+    showDashboard(adminName);
+  };
+
+  const form = document.getElementById("subjectForm");
+  const nameInput = document.getElementById("subjectName");
+  const message = document.getElementById("subjectMessage");
+  const listMessage = document.getElementById("subjectListMessage");
+  const rows = document.getElementById("subjectRows");
+  const addButton = document.getElementById("addSubjectButton");
+
+  async function loadSubjects() {
+    listMessage.textContent = "Loading subjects...";
+    const {data: subjects, error} = await supabaseClient
+      .from("internal_subjects")
+      .select("id, subject_name, created_at")
+      .order("subject_name", {ascending:true});
+
+    if(error) {
+      listMessage.textContent = "Subjects load nahi hue: " + error.message;
+      rows.innerHTML = "";
+      return;
+    }
+
+    if(!subjects || subjects.length === 0) {
+      listMessage.textContent = "Abhi koi subject add nahi hua hai.";
+      rows.innerHTML = "";
+      return;
+    }
+
+    listMessage.textContent = "Total subjects: " + subjects.length;
+    rows.innerHTML = subjects.map((subject, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHTML(subject.subject_name)}</td>
+        <td><button type="button" data-edit-subject="${escapeHTML(subject.id)}">Edit</button></td>
+      </tr>
+    `).join("");
+
+    rows.querySelectorAll("[data-edit-subject]").forEach(button => {
+      button.addEventListener("click", async function() {
+        const subjectId = button.getAttribute("data-edit-subject");
+        const currentSubject = subjects.find(item => String(item.id) === String(subjectId));
+        if(!currentSubject) return;
+
+        const revisedName = window.prompt("Edit subject name:", currentSubject.subject_name);
+        if(revisedName === null) return;
+        const cleanName = revisedName.trim();
+        if(!cleanName) {
+          message.style.color = "#b00020";
+          message.textContent = "Subject name blank nahi ho sakta.";
+          return;
+        }
+
+        button.disabled = true;
+        message.style.color = "#17365d";
+        message.textContent = "Subject update ho raha hai...";
+        const {error: updateError} = await supabaseClient
+          .from("internal_subjects")
+          .update({subject_name: cleanName})
+          .eq("id", subjectId);
+
+        if(updateError) {
+          message.style.color = "#b00020";
+          message.textContent = "Update nahi hua: " + updateError.message;
+          button.disabled = false;
+          return;
+        }
+
+        message.style.color = "#15803d";
+        message.textContent = "Subject name update ho gaya.";
+        await loadSubjects();
+      });
+    });
+  }
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const subjectName = nameInput.value.trim();
+    if(!subjectName) {
+      message.style.color = "#b00020";
+      message.textContent = "Pehle subject name likhiye.";
+      return;
+    }
+
+    addButton.disabled = true;
+    message.style.color = "#17365d";
+    message.textContent = "Subject save ho raha hai...";
+
+    const {error: insertError} = await supabaseClient
+      .from("internal_subjects")
+      .insert({subject_name: subjectName});
+
+    if(insertError) {
+      message.style.color = "#b00020";
+      if(insertError.code === "23505") {
+        message.textContent = "Yeh subject pehle se list mein hai.";
+      } else {
+        message.textContent = "Subject save nahi hua: " + insertError.message;
+      }
+    } else {
+      message.style.color = "#15803d";
+      message.textContent = "Subject successfully add ho gaya.";
+      nameInput.value = "";
+      await loadSubjects();
+    }
+    addButton.disabled = false;
+    nameInput.focus();
+  });
+
+  await loadSubjects();
 }
+
 
 async function openAttendance() {
   const dashboard = document.querySelector(".dashboard");
@@ -123,52 +369,78 @@ async function openAttendance() {
   dashboard.innerHTML = `
     <h1>Attendance Management</h1>
     <p>DDCE College Management System</p>
+
     <div class="attendance-tools">
       <label for="attendanceDate">Date:</label>
       <input id="attendanceDate" type="date" required>
     </div>
+
     <p id="attendanceMessage">Loading students...</p>
-<div class="attendance-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:18px 0;">
-  <div class="card" style="border-left:5px solid #2563eb;">
-    <h3>Total Students</h3>
-    <p id="totalCount" style="font-size:28px;font-weight:bold;">0</p>
-  </div>
-  <div class="card" style="border-left:5px solid #16a34a;">
-    <h3>Present</h3>
-    <p id="presentCount" style="font-size:28px;font-weight:bold;color:#16a34a;">0</p>
-  </div>
-  <div class="card" style="border-left:5px solid #dc2626;">
-    <h3>Absent</h3>
-    <p id="absentCount" style="font-size:28px;font-weight:bold;color:#dc2626;">0</p>
-  </div>
-  <div class="card" style="border-left:5px solid #7c3aed;">
-    <h3>Attendance %</h3>
-    <p id="attendancePercent" style="font-size:28px;font-weight:bold;color:#7c3aed;">0%</p>
-  </div>
-</div>
-    <div style="overflow-x:auto">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:18px 0;">
+      <div class="card" style="border-left:5px solid #2563eb;">
+        <h3>Total Students</h3>
+        <p id="totalCount" style="font-size:28px;font-weight:bold;">0</p>
+      </div>
+
+      <div class="card" style="border-left:5px solid #16a34a;">
+        <h3>Present</h3>
+        <p id="presentCount" style="font-size:28px;font-weight:bold;color:#16a34a;">0</p>
+      </div>
+
+      <div class="card" style="border-left:5px solid #dc2626;">
+        <h3>Absent</h3>
+        <p id="absentCount" style="font-size:28px;font-weight:bold;color:#dc2626;">0</p>
+      </div>
+
+      <div class="card" style="border-left:5px solid #7c3aed;">
+        <h3>Attendance %</h3>
+        <p id="attendancePercent" style="font-size:28px;font-weight:bold;color:#7c3aed;">0%</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
       <table>
-        <thead><tr>
-          <th>Enrollment No.</th><th>Student Name</th><th>Attendance</th>
-        </tr></thead>
+        <thead>
+          <tr>
+            <th>Enrollment No.</th>
+            <th>Student Name</th>
+            <th>Attendance</th>
+          </tr>
+        </thead>
         <tbody id="attendanceRows"></tbody>
       </table>
     </div>
-<div id="attendanceReport" style="display:none;"></div>
+
+    <div id="attendanceReport" style="display:none;"></div>
+
     <button id="saveAttendanceButton">Save All Attendance</button>
     <button id="dashboardButton">Back to Dashboard</button>
   `;
 
   const dateInput = document.getElementById("attendanceDate");
   const today = new Date();
+
   dateInput.value = today.getFullYear() + "-" +
-    String(today.getMonth()+1).padStart(2,"0") + "-" +
-    String(today.getDate()).padStart(2,"0");
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
 
   document.getElementById("dashboardButton").onclick = async function() {
-    const {data: profile} = await supabaseClient
-      .from("profiles").select("full_name").single();
-    showDashboard(profile?.full_name || "DDCE Admin");
+    const {data: authData} = await supabaseClient.auth.getUser();
+    const userId = authData?.user?.id;
+    let adminName = "DDCE Admin";
+
+    if(userId) {
+      const {data: profile} = await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if(profile?.full_name) adminName = profile.full_name;
+    }
+
+    showDashboard(adminName);
   };
 
   const message = document.getElementById("attendanceMessage");
@@ -190,7 +462,7 @@ async function openAttendance() {
     return;
   }
 
-  tbody.innerHTML = students.map((student,index) => `
+  tbody.innerHTML = students.map((student, index) => `
     <tr>
       <td>${escapeHTML(student.enrollment_no)}</td>
       <td>${escapeHTML(student.student_name)}</td>
@@ -203,78 +475,76 @@ async function openAttendance() {
     </tr>
   `).join("");
 
-  message.textContent = "Total students: " + students.length;
-function updateAttendanceSummary() {
-  const total = students.length;
-  let present = 0;
-  let absent = 0;
+  function updateAttendanceSummary() {
+    const total = students.length;
+    let present = 0;
+    let absent = 0;
+
+    students.forEach((student, index) => {
+      const status = document.getElementById("status_" + index).value;
+      if(status === "Present") present++;
+      if(status === "Absent") absent++;
+    });
+
+    document.getElementById("totalCount").textContent = total;
+    document.getElementById("presentCount").textContent = present;
+    document.getElementById("absentCount").textContent = absent;
+
+    const percentage = total > 0
+      ? ((present / total) * 100).toFixed(1)
+      : "0.0";
+
+    document.getElementById("attendancePercent").textContent =
+      percentage + "%";
+  }
 
   students.forEach((student, index) => {
-    const status = document.getElementById("status_" + index).value;
-
-    if (status === "Present") present++;
-    if (status === "Absent") absent++;
+    document.getElementById("status_" + index)
+      .addEventListener("change", updateAttendanceSummary);
   });
 
-  document.getElementById("totalCount").textContent = total;
-  document.getElementById("presentCount").textContent = present;
-  document.getElementById("absentCount").textContent = absent;
-
-  const percentage = total > 0
-    ? ((present / total) * 100).toFixed(1)
-    : "0.0";
-
-  document.getElementById("attendancePercent").textContent =
-    percentage + "%";
-}
-
-students.forEach((student, index) => {
-  document.getElementById("status_" + index)
-    .addEventListener("change", updateAttendanceSummary);
-});
- async function loadAttendanceForDate() {
+  async function loadAttendanceForDate() {
     const date = dateInput.value;
-
-    if (!date) return;
+    if(!date) return;
 
     message.textContent = "Attendance load ho rahi hai...";
 
-    const { data: records, error: loadError } = await supabaseClient
+    const {data: records, error: loadError} = await supabaseClient
       .from("attendance")
       .select("student_id, status")
       .eq("attendance_date", date);
 
-    if (loadError) {
+    if(loadError) {
       message.textContent = "Attendance load nahi hui: " + loadError.message;
       return;
     }
 
     students.forEach((student, index) => {
-      const record = records.find(
-        item => item.student_id === student.id
-      );
+      const record = records.find(item => item.student_id === student.id);
 
       document.getElementById("status_" + index).value =
         record ? record.status : "Present";
     });
+
     updateAttendanceSummary();
+
     message.textContent =
       "Total students: " + students.length +
       " | Saved attendance: " + records.length;
   }
 
   dateInput.addEventListener("change", loadAttendanceForDate);
-
   await loadAttendanceForDate();
 
   saveButton.onclick = async function() {
     const date = dateInput.value;
+
     if(!date) {
       message.textContent = "Pehle date select karein.";
       return;
     }
 
-    const records = students.map((student,index) => ({
+    const records = students.map((student, index) => ({
       student_id: student.id,
       attendance_date: date,
       status: document.getElementById("status_" + index).value
@@ -285,95 +555,154 @@ students.forEach((student, index) => {
 
     try {
       const {error: saveError} = await supabaseClient
-  .from("attendance")
-  .upsert(records, {
-    onConflict: "student_id,attendance_date"
-  });
-
-
+        .from("attendance")
+        .upsert(records, {
+          onConflict: "student_id,attendance_date"
+        });
 
       if(saveError) throw saveError;
 
-    updateAttendanceSummary();
+      updateAttendanceSummary();
 
-const total = students.length;
-let present = 0;
-let absent = 0;
+      let present = 0;
+      let absent = 0;
 
-students.forEach((student, index) => {
-  const status = document.getElementById("status_" + index).value;
-  if (status === "Present") present++;
-  if (status === "Absent") absent++;
-});
+      students.forEach((student, index) => {
+        const status = document.getElementById("status_" + index).value;
+        if(status === "Present") present++;
+        if(status === "Absent") absent++;
+      });
 
-const percentage = total > 0
-  ? ((present / total) * 100).toFixed(1)
-  : "0.0";
+      const total = students.length;
 
-const report = document.getElementById("attendanceReport");
+      const percentage = total > 0
+        ? ((present / total) * 100).toFixed(1)
+        : "0.0";
 
-report.innerHTML = `
-  <div style="background:#f4f7fb;padding:22px;border-radius:14px;">
-    <h1 style="color:#17365d;">DDCE Attendance Report</h1>
-    <p><b>Date:</b> ${date}</p>
+      // Present aur Absent students ko alag-alag list mein baantna
+      const presentStudents = students.filter((student, index) =>
+        document.getElementById("status_" + index).value === "Present"
+      );
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
-      <div class="card" style="border-top:5px solid #2563eb;">
-        <h3>Total Students</h3>
-        <p style="font-size:32px;font-weight:bold;">${total}</p>
-      </div>
+      const absentStudents = students.filter((student, index) =>
+        document.getElementById("status_" + index).value === "Absent"
+      );
 
-      <div class="card" style="border-top:5px solid #16a34a;">
-        <h3>Present</h3>
-        <p style="font-size:32px;font-weight:bold;color:#16a34a;">${present}</p>
-      </div>
+      // Present students ki table rows
+      const presentRows = presentStudents.length
+        ? presentStudents.map(student =>
+            "<tr><td>" + escapeHTML(student.enrollment_no) +
+            "</td><td>" + escapeHTML(student.student_name) +
+            "</td></tr>"
+          ).join("")
+        : '<tr><td colspan="2" style="text-align:center;">No present students</td></tr>';
 
-      <div class="card" style="border-top:5px solid #dc2626;">
-        <h3>Absent</h3>
-        <p style="font-size:32px;font-weight:bold;color:#dc2626;">${absent}</p>
-      </div>
+      // Absent students ki table rows
+      const absentRows = absentStudents.length
+        ? absentStudents.map(student =>
+            "<tr><td>" + escapeHTML(student.enrollment_no) +
+            "</td><td>" + escapeHTML(student.student_name) +
+            "</td></tr>"
+          ).join("")
+        : '<tr><td colspan="2" style="text-align:center;">No absent students</td></tr>';
 
-      <div class="card" style="border-top:5px solid #7c3aed;">
-        <h3>Attendance %</h3>
-        <p style="font-size:32px;font-weight:bold;color:#7c3aed;">${percentage}%</p>
-      </div>
-    </div>
+      const report = document.getElementById("attendanceReport");
 
-    <button id="printReportButton">Print / Save as PDF</button>
-    <button id="backAttendanceButton">Back to Attendance</button>
-  </div>
-`;
+      const weekday = new Date(date + "T00:00:00")
+        .toLocaleDateString("en-US", {weekday:"long"});
 
-const dashboard = document.querySelector(".dashboard");
-dashboard.innerHTML = "";
-dashboard.appendChild(report);
-report.style.display = "block";
+      report.innerHTML = `
+        <div class="report-container">
 
-document.getElementById("printReportButton").onclick = function() {
-  window.print();
-};
+          <h1 class="report-title">DDCE Attendance Report</h1>
 
-document.getElementById("backAttendanceButton").onclick = openAttendance;
+          <p><b>Date:</b> ${escapeHTML(date)} (${escapeHTML(weekday)})</p>
 
-document.getElementById("printReportButton").onclick = function() {
-  window.print();
-};
+          <div class="report-summary">
 
-document.getElementById("backAttendanceButton").onclick = openAttendance;
+            <div class="card" style="border-top:5px solid #2563eb;">
+              <h3>Total Students</h3>
+              <p>${total}</p>
+            </div>
 
-report.style.display = "block";
+            <div class="card" style="border-top:5px solid #16a34a;">
+              <h3>Present</h3>
+              <p style="color:#16a34a;">${present}</p>
+            </div>
 
-document.getElementById("printReportButton").onclick = function() {
-  window.print();
-};
+            <div class="card" style="border-top:5px solid #dc2626;">
+              <h3>Absent</h3>
+              <p style="color:#dc2626;">${absent}</p>
+            </div>
 
-document.getElementById("backAttendanceButton").onclick = openAttendance;
+            <div class="card" style="border-top:5px solid #7c3aed;">
+              <h3>Attendance %</h3>
+              <p style="color:#7c3aed;">${percentage}%</p>
+            </div>
+
+          </div>
+
+          <h2 class="present-heading">Present Students List</h2>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Enrollment No.</th>
+                  <th>Student Name</th>
+                </tr>
+              </thead>
+              <tbody>${presentRows}</tbody>
+            </table>
+          </div>
+
+          <h2 class="absent-heading">Absent Students List</h2>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Enrollment No.</th>
+                  <th>Student Name</th>
+                </tr>
+              </thead>
+              <tbody>${absentRows}</tbody>
+            </table>
+          </div>
+
+          <p style="margin-top:25px;">
+            <b>Total:</b> ${total}
+            &nbsp; | &nbsp;
+            <b>Present:</b> ${present}
+            &nbsp; | &nbsp;
+            <b>Absent:</b> ${absent}
+          </p>
+
+          <button id="printReportButton">Print / Save as PDF</button>
+          <button id="backAttendanceButton">Back to Attendance</button>
+
+        </div>
+      `;
+
+      // Attendance form ki jagah report dikhayein
+      dashboard.innerHTML = "";
+      dashboard.appendChild(report);
+      report.style.display = "block";
+
+      document.getElementById("printReportButton").onclick = function() {
+        window.print();
+      };
+
+      document.getElementById("backAttendanceButton").onclick = openAttendance;
+
     } catch(error) {
       message.textContent = "Save nahi hua: " + error.message;
+    } finally {
       saveButton.disabled = false;
     }
   };
 }
 </script>
+
 </body>
 </html>
