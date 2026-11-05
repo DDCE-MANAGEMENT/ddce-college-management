@@ -363,7 +363,9 @@ async function openInternalSubjects() {
 }
 
 
-async function openAttendance() {
+/* UPDATED ATTENDANCE MODULE */
+
+async function openAttendance(selectedSemester = 1) {
   const dashboard = document.querySelector(".dashboard");
 
   dashboard.innerHTML = `
@@ -371,7 +373,13 @@ async function openAttendance() {
     <p>DDCE College Management System</p>
 
     <div class="attendance-tools">
-      <label for="attendanceDate">Date:</label>
+      <label for="semesterSelect"><b>Semester:</b></label>
+      <select id="semesterSelect">
+        <option value="1">SEM 1</option>
+        <option value="3">SEM 3</option>
+      </select>
+
+      <label for="attendanceDate"><b>Date:</b></label>
       <input id="attendanceDate" type="date" required>
     </div>
 
@@ -419,6 +427,13 @@ async function openAttendance() {
   `;
 
   const dateInput = document.getElementById("attendanceDate");
+  const semesterSelect = document.getElementById("semesterSelect");
+  const message = document.getElementById("attendanceMessage");
+  const tbody = document.getElementById("attendanceRows");
+  const saveButton = document.getElementById("saveAttendanceButton");
+
+  semesterSelect.value = String(selectedSemester);
+
   const today = new Date();
 
   dateInput.value = today.getFullYear() + "-" +
@@ -443,37 +458,7 @@ async function openAttendance() {
     showDashboard(adminName);
   };
 
-  const message = document.getElementById("attendanceMessage");
-  const tbody = document.getElementById("attendanceRows");
-  const saveButton = document.getElementById("saveAttendanceButton");
-
-  const {data: students, error} = await supabaseClient
-    .from("students")
-    .select("id, enrollment_no, student_name")
-    .order("enrollment_no");
-
-  if(error) {
-    message.textContent = "Students load nahi hue: " + error.message;
-    return;
-  }
-
-  if(!students || students.length === 0) {
-    message.textContent = "Students table mein koi student nahi mila.";
-    return;
-  }
-
-  tbody.innerHTML = students.map((student, index) => `
-    <tr>
-      <td>${escapeHTML(student.enrollment_no)}</td>
-      <td>${escapeHTML(student.student_name)}</td>
-      <td>
-        <select id="status_${index}">
-          <option value="Present">Present</option>
-          <option value="Absent">Absent</option>
-        </select>
-      </td>
-    </tr>
-  `).join("");
+  let students = [];
 
   function updateAttendanceSummary() {
     const total = students.length;
@@ -481,9 +466,11 @@ async function openAttendance() {
     let absent = 0;
 
     students.forEach((student, index) => {
-      const status = document.getElementById("status_" + index).value;
-      if(status === "Present") present++;
-      if(status === "Absent") absent++;
+      const statusInput = document.getElementById("status_" + index);
+      if(!statusInput) return;
+
+      if(statusInput.value === "Present") present++;
+      if(statusInput.value === "Absent") absent++;
     });
 
     document.getElementById("totalCount").textContent = total;
@@ -498,21 +485,19 @@ async function openAttendance() {
       percentage + "%";
   }
 
-  students.forEach((student, index) => {
-    document.getElementById("status_" + index)
-      .addEventListener("change", updateAttendanceSummary);
-  });
-
   async function loadAttendanceForDate() {
     const date = dateInput.value;
-    if(!date) return;
+    if(!date || students.length === 0) return;
 
     message.textContent = "Attendance load ho rahi hai...";
+
+    const studentIds = students.map(student => student.id);
 
     const {data: records, error: loadError} = await supabaseClient
       .from("attendance")
       .select("student_id, status")
-      .eq("attendance_date", date);
+      .eq("attendance_date", date)
+      .in("student_id", studentIds);
 
     if(loadError) {
       message.textContent = "Attendance load nahi hui: " + loadError.message;
@@ -520,27 +505,100 @@ async function openAttendance() {
     }
 
     students.forEach((student, index) => {
-      const record = records.find(item => item.student_id === student.id);
+      const record = records.find(item =>
+        String(item.student_id) === String(student.id)
+      );
 
-      document.getElementById("status_" + index).value =
-        record ? record.status : "Present";
+      const statusInput = document.getElementById("status_" + index);
+
+      if(statusInput) {
+        statusInput.value = record ? record.status : "Present";
+      }
     });
 
     updateAttendanceSummary();
 
     message.textContent =
-      "Total students: " + students.length +
+      "SEM " + semesterSelect.value +
+      " | Total students: " + students.length +
       " | Saved attendance: " + records.length;
   }
 
+  async function loadSemesterStudents() {
+    const semester = Number(semesterSelect.value);
+
+    saveButton.disabled = true;
+    tbody.innerHTML = "";
+    students = [];
+
+    document.getElementById("totalCount").textContent = "0";
+    document.getElementById("presentCount").textContent = "0";
+    document.getElementById("absentCount").textContent = "0";
+    document.getElementById("attendancePercent").textContent = "0%";
+
+    message.textContent = "SEM " + semester + " students load ho rahe hain...";
+
+    const {data: loadedStudents, error} = await supabaseClient
+      .from("students")
+      .select("id, enrollment_no, student_name")
+      .eq("semester", semester)
+      .order("enrollment_no");
+
+    if(error) {
+      message.textContent = "Students load nahi hue: " + error.message;
+      saveButton.disabled = false;
+      return;
+    }
+
+    students = loadedStudents || [];
+
+    if(students.length === 0) {
+      message.textContent = "SEM " + semester + " mein koi student nahi mila.";
+      saveButton.disabled = false;
+      return;
+    }
+
+    tbody.innerHTML = students.map((student, index) => `
+      <tr>
+        <td>${escapeHTML(student.enrollment_no)}</td>
+        <td>${escapeHTML(student.student_name)}</td>
+        <td>
+          <select id="status_${index}">
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </td>
+      </tr>
+    `).join("");
+
+    students.forEach((student, index) => {
+      document.getElementById("status_" + index)
+        .addEventListener("change", updateAttendanceSummary);
+    });
+
+    await loadAttendanceForDate();
+    saveButton.disabled = false;
+  }
+
+  semesterSelect.addEventListener("change", async function() {
+    await loadSemesterStudents();
+  });
+
   dateInput.addEventListener("change", loadAttendanceForDate);
-  await loadAttendanceForDate();
+
+  await loadSemesterStudents();
 
   saveButton.onclick = async function() {
     const date = dateInput.value;
+    const semester = Number(semesterSelect.value);
 
     if(!date) {
       message.textContent = "Pehle date select karein.";
+      return;
+    }
+
+    if(students.length === 0) {
+      message.textContent = "Is semester mein students nahi hain.";
       return;
     }
 
@@ -579,7 +637,6 @@ async function openAttendance() {
         ? ((present / total) * 100).toFixed(1)
         : "0.0";
 
-      // Present aur Absent students ko alag-alag list mein baantna
       const presentStudents = students.filter((student, index) =>
         document.getElementById("status_" + index).value === "Present"
       );
@@ -588,7 +645,6 @@ async function openAttendance() {
         document.getElementById("status_" + index).value === "Absent"
       );
 
-      // Present students ki table rows
       const presentRows = presentStudents.length
         ? presentStudents.map(student =>
             "<tr><td>" + escapeHTML(student.enrollment_no) +
@@ -597,7 +653,6 @@ async function openAttendance() {
           ).join("")
         : '<tr><td colspan="2" style="text-align:center;">No present students</td></tr>';
 
-      // Absent students ki table rows
       const absentRows = absentStudents.length
         ? absentStudents.map(student =>
             "<tr><td>" + escapeHTML(student.enrollment_no) +
@@ -615,6 +670,8 @@ async function openAttendance() {
         <div class="report-container">
 
           <h1 class="report-title">DDCE Attendance Report</h1>
+
+          <h2>SEM ${semester}</h2>
 
           <p><b>Date:</b> ${escapeHTML(date)} (${escapeHTML(weekday)})</p>
 
@@ -671,6 +728,8 @@ async function openAttendance() {
           </div>
 
           <p style="margin-top:25px;">
+            <b>Semester:</b> SEM ${semester}
+            &nbsp; | &nbsp;
             <b>Total:</b> ${total}
             &nbsp; | &nbsp;
             <b>Present:</b> ${present}
@@ -684,7 +743,6 @@ async function openAttendance() {
         </div>
       `;
 
-      // Attendance form ki jagah report dikhayein
       dashboard.innerHTML = "";
       dashboard.appendChild(report);
       report.style.display = "block";
@@ -693,11 +751,12 @@ async function openAttendance() {
         window.print();
       };
 
-      document.getElementById("backAttendanceButton").onclick = openAttendance;
+      document.getElementById("backAttendanceButton").onclick = function() {
+        openAttendance(semester);
+      };
 
     } catch(error) {
       message.textContent = "Save nahi hua: " + error.message;
-    } finally {
       saveButton.disabled = false;
     }
   };
