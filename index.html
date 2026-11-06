@@ -166,6 +166,12 @@ function showDashboard(adminName) {
         </div>
 
         <div class="card">
+          <h3>Fee Receipt Management</h3>
+          <p>Generate, search and print student fee receipts.</p>
+          <button id="feeReceiptButton">Open Fee Receipt</button>
+        </div>
+
+        <div class="card">
           <h3>Student Records</h3>
           <p>View student records.</p>
           <button onclick="alert('This module is not ready yet.')">Open</button>
@@ -196,10 +202,98 @@ function showDashboard(adminName) {
 
   document.getElementById("attendanceButton").onclick = openAttendance;
   document.getElementById("internalSubjectsButton").onclick = openInternalSubjects;
+  document.getElementById("feeReceiptButton").onclick = openFeeReceipt;
 
   document.getElementById("logoutButton").onclick = async function() {
     await supabaseClient.auth.signOut();
     location.reload();
+  };
+}
+
+
+/* FEE RECEIPT MODULE - INITIAL PAGE */
+
+async function openFeeReceipt() {
+  const dashboard = document.querySelector(".dashboard");
+
+  dashboard.innerHTML = `
+    <h1>Fee Receipt Management</h1>
+    <p>DDCE College Management System</p>
+
+    <div class="cards">
+
+      <div class="card">
+        <h3>Generate New Receipt</h3>
+        <p>Create a receipt for a new fee payment.</p>
+        <button id="newFeeReceiptButton">Open</button>
+      </div>
+
+      <div class="card">
+        <h3>Previous Fee Receipt</h3>
+        <p>Generate a receipt for fees already paid earlier.</p>
+        <button id="previousFeeReceiptButton">Open</button>
+      </div>
+
+      <div class="card">
+        <h3>Search Student</h3>
+        <p>Find a student for fee receipt work.</p>
+        <button id="searchFeeStudentButton">Open</button>
+      </div>
+
+      <div class="card">
+        <h3>Receipt History</h3>
+        <p>View previously generated receipts.</p>
+        <button id="feeReceiptHistoryButton">Open</button>
+      </div>
+
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Important</h3>
+      <p>
+        Fee receipt format and database connection will be configured
+        after confirming the original receipt details.
+      </p>
+      <p>
+        Generating a previous receipt will not record a second payment.
+      </p>
+    </div>
+
+    <button id="feeReceiptDashboardButton">Back to Dashboard</button>
+  `;
+
+  document.getElementById("newFeeReceiptButton").onclick = function() {
+    alert("New payment receipt form will be configured after confirming the receipt format.");
+  };
+
+  document.getElementById("previousFeeReceiptButton").onclick = function() {
+    alert("Previous fee receipt form will be configured after confirming the receipt format.");
+  };
+
+  document.getElementById("searchFeeStudentButton").onclick = function() {
+    alert("Student search will be configured with the student database.");
+  };
+
+  document.getElementById("feeReceiptHistoryButton").onclick = function() {
+    alert("Receipt history will be configured after the receipt database is finalized.");
+  };
+
+  document.getElementById("feeReceiptDashboardButton").onclick = async function() {
+    const {data: authData} = await supabaseClient.auth.getUser();
+    const userId = authData?.user?.id;
+    let adminName = "DDCE Admin";
+
+    if(userId) {
+      const {data: profile} = await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if(profile?.full_name) adminName = profile.full_name;
+    }
+
+    showDashboard(adminName);
   };
 }
 
