@@ -7,29 +7,300 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#eef2f7;color:#17365d}
-.login-box{background:white;width:min(420px,calc(100% - 30px));margin:60px auto;padding:25px;border-radius:12px;box-shadow:0 4px 20px #0002;text-align:center}
-input,select{box-sizing:border-box;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+  color:#17365d;
+}
+
+.login-box{
+  background:white;
+  width:min(420px,calc(100% - 30px));
+  margin:60px auto;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 4px 20px #0002;
+  text-align:center;
+}
+
+input,select{
+  box-sizing:border-box;
+  padding:10px;
+  margin:6px 0;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
 .login-box input{width:100%}
-button{padding:11px 15px;margin:8px 5px 8px 0;background:#17365d;color:white;border:0;border-radius:6px;cursor:pointer}
+
+button{
+  padding:11px 15px;
+  margin:8px 5px 8px 0;
+  background:#17365d;
+  color:white;
+  border:0;
+  border-radius:6px;
+  cursor:pointer;
+}
+
 button:disabled{opacity:.6;cursor:wait}
-.dashboard{max-width:1100px;margin:25px auto;padding:20px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-.card{background:white;padding:20px;border-radius:10px;box-shadow:0 3px 12px #0001;min-width:0}
+
+.dashboard{
+  max-width:1100px;
+  margin:25px auto;
+  padding:20px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+}
+
+.card{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 3px 12px #0001;
+  min-width:0;
+}
+
 .card button{width:100%}
+
 #message{color:#b00020}
-table{width:100%;min-width:320px;border-collapse:collapse;background:white;margin-top:10px}
-th,td{padding:10px;border:1px solid #ddd;text-align:left;overflow-wrap:anywhere}
+
+table{
+  width:100%;
+  min-width:320px;
+  border-collapse:collapse;
+  background:white;
+  margin-top:10px;
+}
+
+th,td{
+  padding:10px;
+  border:1px solid #ddd;
+  text-align:left;
+  overflow-wrap:anywhere;
+}
+
 th{background:#e1eaf5}
-.attendance-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+
+.attendance-tools{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.report-summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+
 .present-heading{color:#15803d;margin-top:28px}
 .absent-heading{color:#b91c1c;margin-top:28px}
-.table-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.report-container{background:#f4f7fb;padding:22px;border-radius:14px}
+
+.table-wrapper{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.report-container{
+  background:#f4f7fb;
+  padding:22px;
+  border-radius:14px;
+}
+
 .report-title{color:#17365d}
 .report-summary .card h3{font-size:18px}
-.report-summary .card p{font-size:32px;font-weight:bold;margin:10px 0}
+.report-summary .card p{
+  font-size:32px;
+  font-weight:bold;
+  margin:10px 0;
+}
+
+/* ==================================
+   DDCE PERMANENT COLOURFUL DASHBOARD
+   Keep these classes for future updates
+================================== */
+
+.dashboard-home{
+  max-width:1150px;
+  margin:0 auto;
+}
+
+.dashboard-header{
+  position:relative;
+  overflow:hidden;
+  padding:30px;
+  margin-bottom:25px;
+  border-radius:18px;
+  color:white;
+  background:linear-gradient(120deg,#17365d,#285c91,#477fc0);
+  box-shadow:0 8px 24px #17365d25;
+}
+
+.dashboard-header:after{
+  content:"";
+  position:absolute;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  right:-55px;
+  top:-100px;
+  background:#ffffff18;
+}
+
+.dashboard-header h1{
+  margin:0 0 10px;
+  font-size:30px;
+  color:white;
+}
+
+.dashboard-header p{
+  margin:5px 0;
+  color:#eaf3ff;
+}
+
+.dashboard-header .dashboard-welcome{
+  font-size:15px;
+}
+
+.dashboard-section-title{
+  font-size:21px;
+  color:#17365d;
+  margin:25px 0 16px;
+}
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+}
+
+.dashboard-card{
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  min-height:205px;
+  padding:22px;
+  border-radius:16px;
+  border:1px solid #e8edf5;
+  box-shadow:0 4px 14px #18365d12;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+
+.dashboard-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 9px 22px #18365d20;
+}
+
+.dashboard-card:after{
+  content:"";
+  position:absolute;
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  right:-35px;
+  bottom:-45px;
+  background:#ffffff70;
+}
+
+.dashboard-card .dashboard-icon{
+  width:52px;
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  font-size:27px;
+  margin-bottom:15px;
+  background:#ffffffb5;
+}
+
+.dashboard-card h3{
+  font-size:18px;
+  margin:0 0 8px;
+  color:#17365d;
+}
+
+.dashboard-card p{
+  font-size:14px;
+  line-height:1.5;
+  min-height:40px;
+  margin:0 0 12px;
+  color:#52647a;
+}
+
+.dashboard-card button{
+  width:100%;
+  margin:5px 0 0;
+  border:0;
+  border-radius:8px;
+  font-weight:bold;
+  padding:11px;
+  color:white;
+  position:relative;
+  z-index:1;
+}
+
+.dashboard-card button:hover{
+  filter:brightness(.94);
+}
+
+.dashboard-card.attendance{
+  background:linear-gradient(145deg,#e8f0ff,#dce8ff);
+  border-top:5px solid #2563eb;
+}
+.dashboard-card.attendance button{background:#2563eb}
+
+.dashboard-card.internal{
+  background:linear-gradient(145deg,#e8f8ee,#d9f2e2);
+  border-top:5px solid #16834a;
+}
+.dashboard-card.internal button{background:#16834a}
+
+.dashboard-card.fees{
+  background:linear-gradient(145deg,#fff4e7,#ffead2);
+  border-top:5px solid #d97706;
+}
+.dashboard-card.fees button{background:#d97706}
+
+.dashboard-card.students{
+  background:linear-gradient(145deg,#f2eaff,#e8dcff);
+  border-top:5px solid #7541b8;
+}
+.dashboard-card.students button{background:#7541b8}
+
+.dashboard-card.lesson{
+  background:linear-gradient(145deg,#fcebf1,#f8dce8);
+  border-top:5px solid #c13d70;
+}
+.dashboard-card.lesson button{background:#c13d70}
+
+.dashboard-card.internship{
+  background:linear-gradient(145deg,#e5f7f7,#d4eeee);
+  border-top:5px solid #087f83;
+}
+.dashboard-card.internship button{background:#087f83}
+
+.dashboard-card.reports{
+  background:linear-gradient(145deg,#fff0f0,#ffe0e0);
+  border-top:5px solid #c24141;
+}
+.dashboard-card.reports button{background:#c24141}
+
+.dashboard-logout{
+  margin-top:25px;
+  background:#17365d;
+  padding:12px 24px;
+  border-radius:8px;
+}
 
 @media(max-width:600px){
   .dashboard{padding:12px;margin:10px auto}
@@ -42,7 +313,26 @@ th{background:#e1eaf5}
   th,td{padding:7px;font-size:13px}
   button{font-size:14px}
   h1{font-size:25px}
-  h2{font-size:21px}
+
+  .dashboard-header{
+    padding:22px 18px;
+    border-radius:14px;
+  }
+
+  .dashboard-header h1{font-size:24px}
+  .dashboard-grid{grid-template-columns:1fr 1fr;gap:11px}
+  .dashboard-card{padding:14px;min-height:195px}
+  .dashboard-card h3{font-size:15px}
+  .dashboard-card p{font-size:12px;min-height:48px}
+  .dashboard-card .dashboard-icon{
+    width:43px;
+    height:43px;
+    font-size:23px;
+  }
+}
+
+@media(max-width:360px){
+  .dashboard-grid{grid-template-columns:1fr}
 }
 
 @media print{
@@ -141,6 +431,8 @@ function escapeHTML(value) {
   });
 }
 
+/* DDCE DASHBOARD HOME - DESIGN SEPARATE AND STABLE */
+
 function showDashboard(adminName) {
   document.getElementById("loginBox").style.display = "none";
 
@@ -149,54 +441,74 @@ function showDashboard(adminName) {
 
   document.body.insertAdjacentHTML("beforeend", `
     <div class="dashboard">
-      <h1>DDCE Admin Dashboard</h1>
-      <p>Welcome, ${escapeHTML(adminName)}!</p>
+      <div class="dashboard-home">
 
-      <div class="cards">
-        <div class="card">
-          <h3>Attendance Management</h3>
-          <p>Mark daily attendance.</p>
-          <button id="attendanceButton">Open Attendance</button>
+        <div class="dashboard-header">
+          <h1>DDCE Admin Dashboard</h1>
+          <p class="dashboard-welcome">
+            Welcome, ${escapeHTML(adminName)}!
+          </p>
+          <p>DDCE College Management System</p>
         </div>
 
-        <div class="card">
-          <h3>Internal Exam Marks</h3>
-          <p>Manage internal marks and B.Ed. subjects.</p>
-          <button id="internalSubjectsButton">Open Subject List</button>
+        <h2 class="dashboard-section-title">College Management Modules</h2>
+
+        <div class="dashboard-grid">
+
+          <div class="dashboard-card attendance">
+            <div class="dashboard-icon">📅</div>
+            <h3>Attendance Management</h3>
+            <p>Mark and manage daily student attendance.</p>
+            <button id="attendanceButton">Open Attendance</button>
+          </div>
+
+          <div class="dashboard-card internal">
+            <div class="dashboard-icon">📚</div>
+            <h3>Internal Exam Marks</h3>
+            <p>Manage internal marks and B.Ed. subjects.</p>
+            <button id="internalSubjectsButton">Open Subject List</button>
+          </div>
+
+          <div class="dashboard-card fees">
+            <div class="dashboard-icon">🧾</div>
+            <h3>Fee Receipt Management</h3>
+            <p>Generate, search and print student fee receipts.</p>
+            <button id="feeReceiptButton">Open Fee Receipt</button>
+          </div>
+
+          <div class="dashboard-card students">
+            <div class="dashboard-icon">👨‍🎓</div>
+            <h3>Student Records</h3>
+            <p>View and manage student records.</p>
+            <button onclick="alert('This module is not ready yet.')">Open</button>
+          </div>
+
+          <div class="dashboard-card lesson">
+            <div class="dashboard-icon">📝</div>
+            <h3>Lesson Plans</h3>
+            <p>Manage teaching and lesson plans.</p>
+            <button onclick="alert('This module is not ready yet.')">Open</button>
+          </div>
+
+          <div class="dashboard-card internship">
+            <div class="dashboard-icon">🎓</div>
+            <h3>Internship Records</h3>
+            <p>Manage student internship records.</p>
+            <button onclick="alert('This module is not ready yet.')">Open</button>
+          </div>
+
+          <div class="dashboard-card reports">
+            <div class="dashboard-icon">📊</div>
+            <h3>Reports / PDF Printing</h3>
+            <p>View reports and print PDF documents.</p>
+            <button onclick="alert('This module is not ready yet.')">Open</button>
+          </div>
+
         </div>
 
-        <div class="card">
-          <h3>Fee Receipt Management</h3>
-          <p>Generate, search and print student fee receipts.</p>
-          <button id="feeReceiptButton">Open Fee Receipt</button>
-        </div>
+        <button class="dashboard-logout" id="logoutButton">Logout</button>
 
-        <div class="card">
-          <h3>Student Records</h3>
-          <p>View student records.</p>
-          <button onclick="alert('This module is not ready yet.')">Open</button>
-        </div>
-
-        <div class="card">
-          <h3>Lesson Plans</h3>
-          <p>Manage lesson plans.</p>
-          <button onclick="alert('This module is not ready yet.')">Open</button>
-        </div>
-
-        <div class="card">
-          <h3>Internship Records</h3>
-          <p>Manage internship records.</p>
-          <button onclick="alert('This module is not ready yet.')">Open</button>
-        </div>
-
-        <div class="card">
-          <h3>Reports / PDF Printing</h3>
-          <p>Reports and printing.</p>
-          <button onclick="alert('This module is not ready yet.')">Open</button>
-        </div>
       </div>
-
-      <button id="logoutButton">Logout</button>
     </div>
   `);
 
