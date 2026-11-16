@@ -332,29 +332,7 @@ th{background:#e1eaf5}
 }
 
 @media(max-width:360px){
-  .dashboard-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:8px;
-  }
-
-  .dashboard-card{
-    padding:10px;
-    min-height:190px;
-  }
-
-  .dashboard-card h3{
-    font-size:13px;
-  }
-
-  .dashboard-card p{
-    font-size:11px;
-    min-height:55px;
-  }
-
-  .dashboard-card button{
-    font-size:11px;
-    padding:9px 5px;
-  }
+  .dashboard-grid{grid-template-columns:1fr}
 }
 
 @media print{
@@ -370,6 +348,55 @@ th{background:#e1eaf5}
   th,td{font-size:11px;padding:6px}
   h1,h2,h3{break-after:avoid}
 }
+
+/* COLOURFUL FEE RECEIPT SEMESTER AND OPTION CARDS */
+.fee-page-title{color:#17365d;margin-bottom:8px}
+.fee-semester-grid,.fee-options-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;margin-top:22px
+}
+.fee-semester-card,.fee-option-card{
+  padding:22px;border-radius:16px;min-width:0;
+  box-shadow:0 5px 16px #17365d18;border:1px solid #ffffff;
+  min-height:170px
+}
+.fee-semester-card h2,.fee-option-card h3{color:#17365d;margin-top:5px}
+.fee-semester-card p,.fee-option-card p{color:#52647a;line-height:1.5}
+.fee-semester-card button,.fee-option-card button{
+  width:100%;color:white;font-weight:bold;border:0;border-radius:9px;
+  padding:12px;margin-top:10px
+}
+.fee-sem-1{background:linear-gradient(145deg,#e5efff,#cbdcff);border-top:5px solid #2563eb}
+.fee-sem-1 button{background:#2563eb}
+.fee-sem-2{background:linear-gradient(145deg,#e2f8e9,#c8efd6);border-top:5px solid #16834a}
+.fee-sem-2 button{background:#16834a}
+.fee-sem-3{background:linear-gradient(145deg,#f2eaff,#e3d3ff);border-top:5px solid #7541b8}
+.fee-sem-3 button{background:#7541b8}
+.fee-sem-4{background:linear-gradient(145deg,#fff1df,#ffdfb8);border-top:5px solid #d97706}
+.fee-sem-4 button{background:#d97706}
+.fee-option-1{background:linear-gradient(145deg,#e8f0ff,#dce8ff);border-top:5px solid #2563eb}
+.fee-option-1 button{background:#2563eb}
+.fee-option-2{background:linear-gradient(145deg,#e5f7ec,#ccefd9);border-top:5px solid #16834a}
+.fee-option-2 button{background:#16834a}
+.fee-option-3{background:linear-gradient(145deg,#f2eaff,#e3d3ff);border-top:5px solid #7541b8}
+.fee-option-3 button{background:#7541b8}
+.fee-option-4{background:linear-gradient(145deg,#fff0e4,#ffdfc2);border-top:5px solid #d97706}
+.fee-option-4 button{background:#d97706}
+.fee-navigation-button{background:#17365d;margin-top:20px;padding:12px 22px;border-radius:9px}
+@media(max-width:600px){
+  .fee-semester-grid,.fee-options-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .fee-semester-card,.fee-option-card{padding:14px;min-height:165px}
+  .fee-semester-card h2{font-size:19px}
+  .fee-option-card h3{font-size:15px}
+  .fee-semester-card p,.fee-option-card p{font-size:12px}
+  .fee-semester-card button,.fee-option-card button{font-size:12px;padding:10px 6px}
+}
+@media(max-width:360px){
+  .fee-semester-grid,.fee-options-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .fee-semester-card,.fee-option-card{padding:11px;min-height:160px}
+}
+
 </style>
 </head>
 
@@ -545,41 +572,98 @@ function showDashboard(adminName) {
 }
 
 
-/* FEE RECEIPT MODULE - INITIAL PAGE */
+/* FEE RECEIPT MODULE */
 
-async function openFeeReceipt() {
+async function openFeeReceipt(selectedSemester = null) {
   const dashboard = document.querySelector(".dashboard");
+  if(!dashboard) return;
 
+  // First page: choose one of the four semesters.
+  if(selectedSemester === null) {
+    dashboard.innerHTML = `
+      <h1 class="fee-page-title">Fee Receipt Management</h1>
+      <p>DDCE College Management System</p>
+      <h2 class="dashboard-section-title">Select Semester</h2>
+
+      <div class="fee-semester-grid">
+        <div class="fee-semester-card fee-sem-1">
+          <h2>📘 SEM 1</h2>
+          <p>Semester 1 Fee Receipt Management</p>
+          <button type="button" id="feeSem1Button">Open SEM 1</button>
+        </div>
+        <div class="fee-semester-card fee-sem-2">
+          <h2>📗 SEM 2</h2>
+          <p>Semester 2 Fee Receipt Management</p>
+          <button type="button" id="feeSem2Button">Open SEM 2</button>
+        </div>
+        <div class="fee-semester-card fee-sem-3">
+          <h2>📙 SEM 3</h2>
+          <p>Semester 3 Fee Receipt Management</p>
+          <button type="button" id="feeSem3Button">Open SEM 3</button>
+        </div>
+        <div class="fee-semester-card fee-sem-4">
+          <h2>📕 SEM 4</h2>
+          <p>Semester 4 Fee Receipt Management</p>
+          <button type="button" id="feeSem4Button">Open SEM 4</button>
+        </div>
+      </div>
+
+      <button class="fee-navigation-button" id="feeReceiptDashboardButton">
+        Back to Dashboard
+      </button>
+    `;
+
+    document.getElementById("feeSem1Button").onclick = () => openFeeReceipt(1);
+    document.getElementById("feeSem2Button").onclick = () => openFeeReceipt(2);
+    document.getElementById("feeSem3Button").onclick = () => openFeeReceipt(3);
+    document.getElementById("feeSem4Button").onclick = () => openFeeReceipt(4);
+
+    document.getElementById("feeReceiptDashboardButton").onclick = async function() {
+      const {data: authData} = await supabaseClient.auth.getUser();
+      const userId = authData?.user?.id;
+      let adminName = "DDCE Admin";
+
+      if(userId) {
+        const {data: profile} = await supabaseClient
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if(profile?.full_name) adminName = profile.full_name;
+      }
+      showDashboard(adminName);
+    };
+    return;
+  }
+
+  // Semester page: keep the same four existing receipt options.
   dashboard.innerHTML = `
-    <h1>Fee Receipt Management</h1>
+    <h1 class="fee-page-title">Fee Receipt Management</h1>
+    <h2>SEM ${selectedSemester}</h2>
     <p>DDCE College Management System</p>
 
-    <div class="cards">
-
-      <div class="card">
-        <h3>Generate New Receipt</h3>
+    <div class="fee-options-grid">
+      <div class="fee-option-card fee-option-1">
+        <h3>🧾 Generate New Receipt</h3>
         <p>Create a receipt for a new fee payment.</p>
-        <button id="newFeeReceiptButton">Open</button>
+        <button type="button" id="newFeeReceiptButton">Open</button>
       </div>
-
-      <div class="card">
-        <h3>Previous Fee Receipt</h3>
+      <div class="fee-option-card fee-option-2">
+        <h3>📄 Previous Fee Receipt</h3>
         <p>Generate a receipt for fees already paid earlier.</p>
-        <button id="previousFeeReceiptButton">Open</button>
+        <button type="button" id="previousFeeReceiptButton">Open</button>
       </div>
-
-      <div class="card">
-        <h3>Search Student</h3>
+      <div class="fee-option-card fee-option-3">
+        <h3>🔍 Search Student</h3>
         <p>Find a student for fee receipt work.</p>
-        <button id="searchFeeStudentButton">Open</button>
+        <button type="button" id="searchFeeStudentButton">Open</button>
       </div>
-
-      <div class="card">
-        <h3>Receipt History</h3>
+      <div class="fee-option-card fee-option-4">
+        <h3>📚 Receipt History</h3>
         <p>View previously generated receipts.</p>
-        <button id="feeReceiptHistoryButton">Open</button>
+        <button type="button" id="feeReceiptHistoryButton">Open</button>
       </div>
-
     </div>
 
     <div class="card" style="margin-top:18px;">
@@ -593,7 +677,12 @@ async function openFeeReceipt() {
       </p>
     </div>
 
-    <button id="feeReceiptDashboardButton">Back to Dashboard</button>
+    <button class="fee-navigation-button" id="feeBackToSemesters">
+      Back to Semesters
+    </button>
+    <button class="fee-navigation-button" id="feeReceiptDashboardButton">
+      Back to Dashboard
+    </button>
   `;
 
   document.getElementById("newFeeReceiptButton").onclick = function() {
@@ -612,6 +701,10 @@ async function openFeeReceipt() {
     alert("Receipt history will be configured after the receipt database is finalized.");
   };
 
+  document.getElementById("feeBackToSemesters").onclick = function() {
+    openFeeReceipt();
+  };
+
   document.getElementById("feeReceiptDashboardButton").onclick = async function() {
     const {data: authData} = await supabaseClient.auth.getUser();
     const userId = authData?.user?.id;
@@ -626,11 +719,9 @@ async function openFeeReceipt() {
 
       if(profile?.full_name) adminName = profile.full_name;
     }
-
     showDashboard(adminName);
   };
 }
-
 
 async function openInternalSubjects() {
   const dashboard = document.querySelector(".dashboard");
