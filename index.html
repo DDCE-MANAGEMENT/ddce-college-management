@@ -397,6 +397,54 @@ th{background:#e1eaf5}
   .fee-semester-card,.fee-option-card{padding:11px;min-height:160px}
 }
 
+
+/* FEE RECEIPT FORM */
+.fee-form-wrap{background:#fff;padding:22px;border-radius:14px;box-shadow:0 4px 15px #17365d12;margin-top:18px}
+.fee-form-section{margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid #e5edf7;color:#17365d}
+.fee-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fee-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fee-field label{font-weight:600;color:#344b68;font-size:14px}
+.fee-field input,.fee-field select,.fee-field textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;min-width:0}
+.fee-field input[readonly]{background:#f1f5f9;color:#475569}
+.fee-items{width:100%;border-collapse:collapse;margin-top:10px}
+.fee-items th,.fee-items td{border:1px solid #dbe3ed;padding:9px;text-align:left}
+.fee-items th{background:#eaf1fa}
+.fee-items input{width:130px;max-width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px}
+.fee-total-line{display:flex;justify-content:flex-end;gap:18px;align-items:center;margin-top:16px;font-size:20px;font-weight:bold;color:#17365d}
+.fee-action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.fee-action-row button{margin:0}
+.fee-primary-btn{background:#1763b1}
+.fee-secondary-btn{background:#64748b}
+.fee-note{color:#64748b;font-size:13px}
+#feePrintArea{display:none}
+.fee-receipt-no-field{grid-column:1/-1}
+.fee-receipt-no-field input{max-width:420px}
+@media(max-width:600px){.fee-form-wrap{padding:14px}.fee-form-grid{grid-template-columns:1fr}.fee-items{min-width:560px}.fee-items-scroll{overflow-x:auto}.fee-total-line{font-size:17px}}
+@media print{
+  @page{size:A4 portrait;margin:14mm}
+  body.fee-printing *{visibility:hidden!important}
+  body.fee-printing #feePrintArea,body.fee-printing #feePrintArea *{visibility:visible!important}
+  body.fee-printing #feePrintArea{display:block!important;position:absolute;left:0;top:0;width:100%;padding:0;background:white;color:#172b45;font-family:Arial,sans-serif}
+  body.fee-printing #feePrintArea .receipt-sheet{border:2px solid #17365d;padding:22px 24px;max-width:100%;}
+  body.fee-printing #feePrintArea .receipt-top{display:flex;align-items:center;gap:16px;border-bottom:3px solid #17365d;padding-bottom:13px;margin-bottom:15px}
+  body.fee-printing #feePrintArea .receipt-logo-space{width:76px;height:76px;border:1px dashed #9aa9bb;display:flex;align-items:center;justify-content:center;color:#7b8796;font-size:10px;text-align:center;flex-shrink:0}
+  body.fee-printing #feePrintArea .receipt-college{text-align:center;flex:1}
+  body.fee-printing #feePrintArea .receipt-college h2{font-size:19px;margin:0 0 5px;color:#17365d}
+  body.fee-printing #feePrintArea .receipt-college p{font-size:10px;margin:3px 0;color:#475569}
+  body.fee-printing #feePrintArea .receipt-title{display:inline-block;background:#17365d;color:white;padding:6px 22px;margin-top:8px;font-size:14px;letter-spacing:1px}
+  body.fee-printing #feePrintArea .receipt-meta{display:flex;justify-content:space-between;gap:15px;background:#eef3f9;padding:10px 12px;margin:12px 0;font-size:12px}
+  body.fee-printing #feePrintArea .receipt-student{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;margin:14px 0;font-size:12px}
+  body.fee-printing #feePrintArea .receipt-student div{border-bottom:1px solid #d6deea;padding:5px 0}
+  body.fee-printing #feePrintArea table{width:100%;min-width:0;border-collapse:collapse;margin-top:12px}
+  body.fee-printing #feePrintArea th{background:#17365d;color:#fff;font-weight:600}
+  body.fee-printing #feePrintArea th,body.fee-printing #feePrintArea td{border:1px solid #aebaca;padding:7px 9px;font-size:11px}
+  body.fee-printing #feePrintArea .receipt-total td{background:#eef3f9;font-weight:bold;font-size:12px}
+  body.fee-printing #feePrintArea .receipt-amount-words{border:1px solid #d6deea;padding:10px;margin-top:12px;font-size:12px}
+  body.fee-printing #feePrintArea .receipt-payment{font-size:12px;margin-top:12px;line-height:1.6}
+  body.fee-printing #feePrintArea .receipt-signatures{display:flex;justify-content:space-between;gap:30px;margin-top:65px;font-size:11px;text-align:center}
+  body.fee-printing #feePrintArea .receipt-signatures span{border-top:1px solid #526174;padding-top:7px;min-width:145px}
+}
+
 </style>
 </head>
 
@@ -686,7 +734,7 @@ async function openFeeReceipt(selectedSemester = null) {
   `;
 
   document.getElementById("newFeeReceiptButton").onclick = function() {
-    alert("New payment receipt form will be configured after confirming the receipt format.");
+    openNewFeeReceiptSemesterPicker(selectedSemester);
   };
 
   document.getElementById("previousFeeReceiptButton").onclick = function() {
@@ -721,6 +769,360 @@ async function openFeeReceipt(selectedSemester = null) {
     }
     showDashboard(adminName);
   };
+}
+
+
+/* SEMESTER SELECTION INSIDE GENERATE NEW RECEIPT */
+function openNewFeeReceiptSemesterPicker(returnSemester) {
+  const dashboard = document.querySelector(".dashboard");
+  if(!dashboard) return;
+
+  dashboard.innerHTML = `
+    <h1 class="fee-page-title">Generate New Receipt</h1>
+    <p>Select the semester for which you want to generate a new fee receipt.</p>
+
+    <div class="fee-semester-grid">
+      <div class="fee-semester-card fee-sem-1">
+        <h2>📘 SEM 1</h2>
+        <p>Generate new receipt for Semester 1 students</p>
+        <button type="button" id="generateSem1Receipt">Select SEM 1</button>
+      </div>
+      <div class="fee-semester-card fee-sem-2">
+        <h2>📗 SEM 2</h2>
+        <p>Generate new receipt for Semester 2 students</p>
+        <button type="button" id="generateSem2Receipt">Select SEM 2</button>
+      </div>
+      <div class="fee-semester-card fee-sem-3">
+        <h2>📙 SEM 3</h2>
+        <p>Generate new receipt for Semester 3 students</p>
+        <button type="button" id="generateSem3Receipt">Select SEM 3</button>
+      </div>
+      <div class="fee-semester-card fee-sem-4">
+        <h2>📕 SEM 4</h2>
+        <p>Generate new receipt for Semester 4 students</p>
+        <button type="button" id="generateSem4Receipt">Select SEM 4</button>
+      </div>
+    </div>
+
+    <button class="fee-navigation-button" id="backToReceiptOptions">Back</button>
+  `;
+
+  document.getElementById("generateSem1Receipt").onclick = () => openNewFeeReceipt(1);
+  document.getElementById("generateSem2Receipt").onclick = () => openNewFeeReceipt(2);
+  document.getElementById("generateSem3Receipt").onclick = () => openNewFeeReceipt(3);
+  document.getElementById("generateSem4Receipt").onclick = () => openNewFeeReceipt(4);
+  document.getElementById("backToReceiptOptions").onclick = () => openFeeReceipt(returnSemester);
+}
+
+/* GENERATE NEW FEE RECEIPT - FORM AND PRINT PREVIEW */
+async function openNewFeeReceipt(selectedSemester) {
+  const dashboard = document.querySelector(".dashboard");
+  if(!dashboard) return;
+
+  const feeNames = [
+    `Tuition Fees (SEM ${selectedSemester})`,
+    "Admission Form Fees",
+    "Library Fee (for two Years)",
+    "Caution Money (Refundable)",
+    "College Development Fees",
+    "Identity Card Fees",
+    "Computer Lab Fees",
+    "College Exam Fees",
+    "Practical Work Fees",
+    "University Enrolment Fees",
+    "University Development Fees",
+    "Uni Sports Co-curriculum & Zone Fees",
+    "University Exam Fees"
+  ];
+
+  dashboard.innerHTML = `
+    <h1 class="fee-page-title">Generate New Fee Receipt</h1>
+    <p>DDCE College Management System | SEM ${selectedSemester}</p>
+    <div class="fee-form-wrap">
+      <h2 class="fee-form-section">Receipt Details</h2>
+      <div class="fee-form-grid">
+        <div class="fee-field fee-receipt-no-field">
+          <label for="feeReceiptNumber">Receipt Number *</label>
+          <input id="feeReceiptNumber" type="text" placeholder="DDCE/2026-27/001" required>
+        </div>
+      </div>
+      <h2 class="fee-form-section">Student Details</h2>
+      <div class="fee-form-grid">
+        <div class="fee-field">
+          <label for="feeStudentSelect">Select Student *</label>
+          <select id="feeStudentSelect"><option value="">Loading students...</option></select>
+        </div>
+        <div class="fee-field">
+          <label for="feeEnrollment">Enrollment Number</label>
+          <input id="feeEnrollment" readonly placeholder="Can be added later">
+        </div>
+        <div class="fee-field">
+          <label for="feeStudentName">Student Name</label>
+          <input id="feeStudentName" readonly placeholder="Auto-filled after student selection">
+        </div>
+        <div class="fee-field">
+          <label for="feeSemester">Semester</label>
+          <input id="feeSemester" value="SEM ${selectedSemester}" readonly>
+        </div>
+      </div>
+
+      <h2 class="fee-form-section">Fee Particulars</h2>
+      <p class="fee-note">Sabhi 13 fee particulars receipt mein rahenge. Amount enter na karne par 0.00 maana jayega.</p>
+      <div class="fee-items-scroll">
+        <table class="fee-items">
+          <thead><tr><th style="width:60px">Sr. No.</th><th>Particulars</th><th style="width:170px">Amount (₹)</th></tr></thead>
+          <tbody id="feeParticularRows">
+            ${feeNames.map((name,index)=>`<tr><td>${index+1}</td><td>${escapeHTML(name)}</td><td><input type="number" min="0" step="0.01" class="fee-amount-input" id="feeAmount${index}" inputmode="decimal" value="0.00"></td></tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="fee-total-line"><span>Total Amount:</span><span>₹ <span id="feeGrandTotal">0.00</span></span></div>
+      <div class="fee-field" style="margin-top:12px">
+        <label>Amount in Words</label>
+        <input id="feeAmountWords" readonly value="Rupees Zero Only">
+      </div>
+
+      <h2 class="fee-form-section">Payment Details</h2>
+      <div class="fee-form-grid">
+        <div class="fee-field">
+          <label for="feePaymentDate">Payment Date *</label>
+          <input type="date" id="feePaymentDate" required>
+        </div>
+        <div class="fee-field">
+          <label for="feePaymentMode">Payment Mode *</label>
+          <select id="feePaymentMode">
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Cheque</option>
+            <option value="UPI">UPI</option>
+          </select>
+        </div>
+      </div>
+      <div id="feeChequeFields" class="fee-form-grid" style="display:none;margin-top:14px">
+        <div class="fee-field"><label for="feeChequeNo">Cheque Number *</label><input id="feeChequeNo" placeholder="Enter cheque number"></div>
+        <div class="fee-field"><label for="feeBankName">Bank Name *</label><input id="feeBankName" placeholder="Enter bank name"></div>
+        <div class="fee-field"><label for="feeChequeDate">Cheque Date *</label><input type="date" id="feeChequeDate"></div>
+      </div>
+      <div id="feeUpiFields" class="fee-form-grid" style="display:none;margin-top:14px">
+        <div class="fee-field"><label for="feeUpiRef">Transaction ID / UTR *</label><input id="feeUpiRef" placeholder="Enter UPI transaction ID / UTR"></div>
+      </div>
+      <div class="fee-field" style="margin-top:14px">
+        <label for="feeRemarks">Note / Remarks (Optional)</label>
+        <textarea id="feeRemarks" rows="3" placeholder="Enter note or remarks, if any"></textarea>
+      </div>
+      <p id="feeFormMessage" class="fee-note" role="status"></p>
+      <div class="fee-action-row">
+        <button type="button" class="fee-primary-btn" id="feePreviewPrintButton">Print Receipt</button>
+        <button type="button" class="fee-primary-btn" id="feeSavePdfButton">Save as PDF</button>
+        <button type="button" class="fee-secondary-btn" id="feeBackToSemesterOptions">Back</button>
+      </div>
+      <p class="fee-note">Print Receipt se print nikalein. Save as PDF par click karke print window mein Destination / Printer ke andar “Save as PDF” select karein, phir Save karein. Receipt abhi database mein save nahi hoti; database saving agle step mein configure hogi.</p>
+    </div>
+    <div id="feePrintArea"></div>
+  `;
+
+  const today = new Date();
+  document.getElementById("feePaymentDate").value = today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+
+  const studentSelect = document.getElementById("feeStudentSelect");
+
+  // SEM 1 names are maintained only inside the Fee Receipt module.
+  // This does not insert, update, or change Attendance / Supabase student records.
+  const sem1FeeStudents = [
+    "AVADIYA ROSHANI",
+    "BAROT DAMINI",
+    "BAROT PAYAL",
+    "BAYAD SAHISTA a.",
+    "BHOOMI A. JOSHI",
+    "BORICHA BHAGYASHRI K.",
+    "CAHUDHARY KAMLA C.",
+    "CHANDEL NIDHI A.",
+    "CHAUHAN VARSHA N.",
+    "DAVE NEHABEN CHANDALAL",
+    "DEEPA GAURISHANKAR KHANNA",
+    "DEVAL RAJKANWAR",
+    "GANGASH BHAVNA",
+    "GEHLOT JIGYSA",
+    "GOHIL ANJALIBA M.",
+    "GOHIL JAYABEN RAMBHAI",
+    "JADAV DIVYA PREMJIBHAI",
+    "HITESH MALI",
+    "JADEJA KRUSHNAPLSINH J",
+    "KAVITA RABARI",
+    "KOLI BHAGYASHREE",
+    "KULDEEP SODHA",
+    "LALAN DIPAK CHAPSHIBHAI",
+    "LODWAL YASHIKA",
+    "MAMAN SALMA",
+    "MANDHRA M. SAHIL",
+    "MAHESHWARI BHUMIKA",
+    "MAHESHWARI KOMAL",
+    "MAHESHWARI NITIN",
+    "MATA MITESH M.",
+    "MIR SHISTA",
+    "PARMAR VARSHA",
+    "POKAR DIYA A.",
+    "PRAJAPATI BHAKTI N.",
+    "RABARI KANKU",
+    "RABARI MAHEHBHAI A.",
+    "RAJORIA PRAGATI",
+    "RATHOD VAIBHAVI R.",
+    "RATHOD VIBHUTI R.",
+    "RATHOD VIKAS",
+    "ROMILA CHAMPI",
+    "SAHNI PRIYA",
+    "SAIYAD NASHIMA D.",
+    "SANJOT HIRAL",
+    "SENMA MEGHAL",
+    "SUMDHA SUMIT",
+    "SWAMI SANJU",
+    "URMILA S. RABARI",
+    "TURI VANDANA",
+    "YADAV SANJANA",
+    "ZALA RIDDHIBA J.",
+    "BARARIYA FORAM"
+  ];
+
+  if(Number(selectedSemester) === 1) {
+    studentSelect.innerHTML = `<option value="">-- Select Student --</option>` +
+      sem1FeeStudents.map((name, index) =>
+        `<option value="sem1-${index + 1}" data-enrollment="" data-name="${escapeHTML(name)}">${escapeHTML(name)}</option>`
+      ).join("");
+    document.getElementById("feeFormMessage").textContent = "SEM 1 ke 52 students Fee Receipt list mein add hain. Enrollment Number baad mein add kiya ja sakta hai.";
+  } else {
+    const {data: students, error} = await supabaseClient
+      .from("students")
+      .select("id, enrollment_no, student_name")
+      .eq("semester", selectedSemester)
+      .order("enrollment_no");
+
+    if(error) {
+      studentSelect.innerHTML = `<option value="">Students load nahi hue</option>`;
+      document.getElementById("feeFormMessage").textContent = "Student list load nahi hui: " + error.message;
+    } else {
+      studentSelect.innerHTML = `<option value="">-- Select Student --</option>` +
+        (students || []).map(student => `<option value="${escapeHTML(student.id)}" data-enrollment="${escapeHTML(student.enrollment_no || "")}" data-name="${escapeHTML(student.student_name || "")}">${escapeHTML(student.enrollment_no || "")} ${student.enrollment_no ? "- " : ""}${escapeHTML(student.student_name || "")}</option>`).join("");
+      if(!students || students.length === 0) {
+        document.getElementById("feeFormMessage").textContent = `SEM ${selectedSemester} mein koi student nahi mila.`;
+      }
+    }
+  }
+
+  studentSelect.onchange = function() {
+    const option = studentSelect.options[studentSelect.selectedIndex];
+    document.getElementById("feeEnrollment").value = option?.dataset.enrollment || "";
+    document.getElementById("feeStudentName").value = option?.dataset.name || "";
+  };
+
+  function numberToWordsIndian(value) {
+    const n = Math.round(Number(value) || 0);
+    if(n === 0) return "Rupees Zero Only";
+    const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+    const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    function underThousand(num) {
+      let out = "";
+      if(num >= 100) { out += ones[Math.floor(num/100)] + " Hundred "; num %= 100; }
+      if(num >= 20) { out += tens[Math.floor(num/10)] + " "; num %= 10; }
+      if(num > 0) out += ones[num] + " ";
+      return out.trim();
+    }
+    let num = n, parts = [];
+    const units = [[10000000,"Crore"],[100000,"Lakh"],[1000,"Thousand"],[1,""]];
+    units.forEach(([div,label]) => {
+      if(num >= div) {
+        const chunk = Math.floor(num/div);
+        parts.push(underThousand(chunk) + (label ? " " + label : ""));
+        num %= div;
+      }
+    });
+    return "Rupees " + parts.join(" ").trim() + " Only";
+  }
+
+  function updateFeeTotal() {
+    let total = 0;
+    document.querySelectorAll(".fee-amount-input").forEach(input => {
+      const amount = Number(input.value);
+      if(input.value !== "" && (!Number.isFinite(amount) || amount < 0)) input.setCustomValidity("Please enter a valid non-negative amount.");
+      else input.setCustomValidity("");
+      total += Number.isFinite(amount) && amount > 0 ? amount : 0;
+    });
+    document.getElementById("feeGrandTotal").textContent = total.toFixed(2);
+    document.getElementById("feeAmountWords").value = numberToWordsIndian(total);
+  }
+  document.querySelectorAll(".fee-amount-input").forEach(input => {
+    input.addEventListener("input", updateFeeTotal);
+    input.addEventListener("blur", function() {
+      if(input.value.trim() === "") input.value = "0.00";
+      else if(Number.isFinite(Number(input.value)) && Number(input.value) >= 0) input.value = Number(input.value).toFixed(2);
+      updateFeeTotal();
+    });
+  });
+
+  const modeSelect = document.getElementById("feePaymentMode");
+  modeSelect.onchange = function() {
+    document.getElementById("feeChequeFields").style.display = modeSelect.value === "Cheque" ? "grid" : "none";
+    document.getElementById("feeUpiFields").style.display = modeSelect.value === "UPI" ? "grid" : "none";
+  };
+
+  document.getElementById("feeBackToSemesterOptions").onclick = () => openFeeReceipt(selectedSemester);
+  const feePrintHandler = function() {
+    const message = document.getElementById("feeFormMessage");
+    const selectedOption = studentSelect.options[studentSelect.selectedIndex];
+    const receiptNumber = document.getElementById("feeReceiptNumber").value.trim();
+    if(!receiptNumber) { message.textContent = "Please enter Receipt Number."; document.getElementById("feeReceiptNumber").focus(); return; }
+    if(!studentSelect.value) { message.textContent = "Please select a student first."; studentSelect.focus(); return; }
+    if(!document.getElementById("feePaymentDate").value) { message.textContent = "Please select payment date."; return; }
+    const amounts = feeNames.map((name,index)=>({name,amount:Number(document.getElementById("feeAmount"+index).value)||0}));
+    const total = amounts.reduce((sum,item)=>sum+item.amount,0);
+    if(total <= 0) { message.textContent = "Please enter at least one fee amount."; return; }
+    const mode = modeSelect.value;
+    let paymentInfo = mode;
+    if(mode === "Cheque") {
+      const chequeNo = document.getElementById("feeChequeNo").value.trim();
+      const bank = document.getElementById("feeBankName").value.trim();
+      const chequeDate = document.getElementById("feeChequeDate").value;
+      if(!chequeNo || !bank || !chequeDate) { message.textContent = "Please fill cheque number, bank name and cheque date."; return; }
+      paymentInfo += ` | Cheque No: ${escapeHTML(chequeNo)} | Bank: ${escapeHTML(bank)} | Cheque Date: ${escapeHTML(chequeDate)}`;
+    }
+    if(mode === "UPI") {
+      const upi = document.getElementById("feeUpiRef").value.trim();
+      if(!upi) { message.textContent = "Please enter UPI Transaction ID / UTR."; return; }
+      paymentInfo += ` | Transaction ID / UTR: ${escapeHTML(upi)}`;
+    }
+    const rows = amounts.map((item,index)=>`<tr><td>${index+1}</td><td>${escapeHTML(item.name)}</td><td style="text-align:right">₹ ${item.amount.toFixed(2)}</td></tr>`).join("");
+    const remarks = document.getElementById("feeRemarks").value.trim();
+    document.getElementById("feePrintArea").innerHTML = `
+      <div class="receipt-sheet">
+        <div class="receipt-top">
+          <div class="receipt-logo-space">COLLEGE<br>LOGO</div>
+          <div class="receipt-college">
+            <h2>DADA DUKHAYAL COLLEGE OF EDUCATION</h2>
+            <p>Managed by Gandhidham Maitri Mandal (GMM), Adipur</p>
+            <p>Maitri School Campus, Ward 3/A, Opp. Sardar Vallabhbhai Patel Garden, Adipur, Kachchh</p>
+            <div class="receipt-title">FEE PAYMENT RECEIPT</div>
+          </div>
+        </div>
+        <div class="receipt-meta">
+          <span><strong>Receipt No.:</strong> ${escapeHTML(receiptNumber)}</span>
+          <span><strong>Payment Date:</strong> ${escapeHTML(document.getElementById("feePaymentDate").value)}</span>
+        </div>
+        <div class="receipt-student">
+          <div><strong>Student Name:</strong> ${escapeHTML(selectedOption.dataset.name)}</div>
+          <div><strong>Enrollment No.:</strong> ${escapeHTML(selectedOption.dataset.enrollment || "")}</div>
+          <div><strong>Semester:</strong> SEM ${selectedSemester}</div>
+          <div><strong>Academic Year:</strong> 2026-27</div>
+        </div>
+        <table><thead><tr><th style="width:55px">Sr. No.</th><th>Fee Particulars</th><th style="width:150px;text-align:right">Amount (₹)</th></tr></thead><tbody>${rows}<tr class="receipt-total"><td colspan="2" style="text-align:right">TOTAL AMOUNT</td><td style="text-align:right">₹ ${total.toFixed(2)}</td></tr></tbody></table>
+        <div class="receipt-amount-words"><strong>Amount in Words:</strong> ${escapeHTML(numberToWordsIndian(total))}</div>
+        <div class="receipt-payment"><strong>Payment Mode:</strong> ${paymentInfo}${remarks ? `<br><strong>Note / Remarks:</strong> ${escapeHTML(remarks)}` : ""}</div>
+        <div class="receipt-signatures"><span>Student Signature</span><span>Cashier / Accountant</span><span>Principal Signature</span></div>
+      </div>
+    `;
+    document.body.classList.add("fee-printing");
+    window.print();
+    document.body.classList.remove("fee-printing");
+  };
+  document.getElementById("feePreviewPrintButton").onclick = feePrintHandler;
+  document.getElementById("feeSavePdfButton").onclick = feePrintHandler;
 }
 
 async function openInternalSubjects() {
